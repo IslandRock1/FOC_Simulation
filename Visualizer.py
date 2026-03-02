@@ -27,30 +27,43 @@ class Visualizer:
         self._numMagnets = numMagnets
         self.setup()
 
+    def close(self):
+        self._controlManager.close()
+
     def setup(self):
         x, y = self._controlManager.getSize()
-        w, h = 500, 500
+        x, y = 1920, 1080
+        w, h = 880, 900
         self._controlManager["freeDraw"] = pw.FreeDraw((0, 0), (w / x, h / y))
 
         self._middleVec = pg.math.Vector2(0.5, 0.5)
         self._texts, self._currentPositions = getTextAndPos(self._numMagnets)
 
         labels = [
-            "RED is torque vector.",
-            "WHITE is position vector.",
-
-            "Motor simulation step: 1 us.",
-            "Simulation time: ",
-            "Motor Angle: ",
-            "Motor Speed: ",
-            "Motor Torque: ",
-            "Motor Torque Angle: "
+            "Motor simulation step:",
+            "Simulation time:",
+            "Motor Angle:",
+            "Motor Speed:",
+            "Motor Torque:",
+            "Motor Torque Angle:"
 
         ]
-        self._controlManager["textBoxes"] = pw.TextBoxes((0.45, 0.0), (0.55, 1.0), labels = labels)
+        self._controlManager["textBoxesTop"] = pw.TextBoxes((0.45, 0.0), (0.55, 0.2),
+                labels=["RED is torque vector.", "WHITE is position vector."])
 
-        alignments = [pw.TextBox.AlignmentHorizontal.LEFT] * 8
-        self._controlManager["textBoxes"].setAlignments(horizontal=alignments)
+        alignments = [pw.TextBox.AlignmentHorizontal.LEFT] * 6
+        self._controlManager["textBoxesLeft"] = pw.TextBoxes((0.45, 0.2), (0.3, 0.3), labels = labels)
+        self._controlManager["textBoxesLeft"].setAlignments(horizontal=alignments)
+
+        self._controlManager["textBoxesRight"] = pw.TextBoxes((0.75, 0.2), (0.25, 0.3), labels = [""] * 6)
+        self._controlManager["textBoxesRight"].setAlignments(horizontal=alignments)
+        self._controlManager["textBoxesRight"].setText("1 us", 0)
+
+        plot = pw.Plot((0.45, 0.5), (0.55, 0.5))
+        plot.setTitle("Motor Velocity")
+        plot.setXLabel("Time (ms)")
+        plot.setYLabel("Velocity (Rad/s)")
+        self._controlManager["plotPosition"] = plot
 
         self._controlManager.update()
 
@@ -68,11 +81,14 @@ class Visualizer:
         if not self._controlManager.isRunning():
             return False
 
-        self._controlManager["textBoxes"].setText(f"Simulation Time: {i.simtime:.3f} s.", 3)
-        self._controlManager["textBoxes"].setText(f"Angle: {i.angleMotor:.3f} rad.", 4)
-        self._controlManager["textBoxes"].setText(f"Angular Velocity: {i.angularVelocity:.3f} rad/s.", 5)
-        self._controlManager["textBoxes"].setText(f"Torque: {i.forceTorque:.3f} .", 6)
-        self._controlManager["textBoxes"].setText(f"Torque Angle: {i.angleTorque:.3f} rad.", 7)
+        # self._controlManager["plotPosition"].addValue(round(i.simtime * 1000, 3), i.angleMotor, 0)
+        self._controlManager["plotPosition"].addValue(round(i.simtime * 1000, 3), i.angularVelocity, 1)
+
+        self._controlManager["textBoxesRight"].setText(f"{i.simtime:.3f} s", 1)
+        self._controlManager["textBoxesRight"].setText(f"{i.angleMotor:.3f} rad", 2)
+        self._controlManager["textBoxesRight"].setText(f"{i.angularVelocity:.3f} rad/s", 3)
+        self._controlManager["textBoxesRight"].setText(f"{i.forceTorque:.3f} ", 4)
+        self._controlManager["textBoxesRight"].setText(f"{i.angleTorque:.3f} rad", 5)
 
         self._controlManager["freeDraw"].fill((0, 0, 0))
 

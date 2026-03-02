@@ -25,6 +25,10 @@ def main():
 
     motor.setTorqueSequence([(0.0, 0.0)])
 
+    for _ in range(500):
+        visu.update(i)
+    print("Starting simulation!")
+
     nanosecond = -1
     while True:
         nanosecond += 1
@@ -52,7 +56,7 @@ def main():
         # This worked, but seems very choppy
         # as the motor moves very far in the 10ms
         # between frames.
-        if (nanosecond % 10_000 == 0):
+        if (nanosecond % 40_000 == 0):
             b = visu.update(i)
             if (not b): break
 
