@@ -11,7 +11,7 @@ def main():
 
     numMagnets = 6
     dt = 0.000001 # 1us
-    motor = Motor(dt)
+    motor = Motor(numMagnets, dt)
     visu = Visualizer(numMagnets)
     controller = Controller(numMagnets)
 
@@ -23,11 +23,7 @@ def main():
     i.angleTorque = controller.getTorque()
     i.forceTorque = motor.getTorque()
 
-    motor.setTorqueSequence([(0.0, 0.0)])
-
-    for _ in range(500):
-        visu.update(i)
-    print("Starting simulation!")
+    motor.setVoltage((0.0, 0.0, 0.0))
 
     nanosecond = -1
     while True:
@@ -45,10 +41,7 @@ def main():
         # 100kHz => every 10'000 nanosecond. Every 10 microseconds.
         if (nanosecond % 10_000 == 0):
             angle = motor.getAngle()
-            torqueSequence = controller.getTorqueSequence(angle)
-            motor.setTorqueSequence(torqueSequence)
-
-            i.angleTorque = controller.getTorque()
+            motor.setVoltage((-1.0, 2.0, -1.0))
 
 
         # Just find a number that works.
@@ -60,7 +53,11 @@ def main():
             b = visu.update(i)
             if (not b): break
 
-    print(f"Simulation finished. Total simulation time: {nanosecond / (1000 * 1000)} ms.")
+            elPower = motor.getElectricalPower()
+            mechPower = motor.getMechanicalPower()
+            print(f"Electrical Power: {elPower:.2f}W | Mechanical Power: {mechPower:.2f}W")
+
+    print(f"Simulation finished. Total simulation time: {nanosecond / (1000.0 * 1000.0)} ms.")
 
 if __name__ == "__main__":
     main()

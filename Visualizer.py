@@ -15,7 +15,7 @@ def getTextAndPos(numMagnets):
     currentPositions = []
     for i in range(6 * numMagnets):
         currentPositions.append((midX + textDist * math.cos(angle), midY + textDist * math.sin(angle)))
-        angle += 2 * math.pi / (6 * numMagnets)
+        angle -= 2 * math.pi / (6 * numMagnets)
     texts = ["A+", "B+", "C+", "A-", "B-", "C-"] * numMagnets
     return texts, currentPositions
 
