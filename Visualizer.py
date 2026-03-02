@@ -35,19 +35,22 @@ class Visualizer:
         self._middleVec = pg.math.Vector2(0.5, 0.5)
         self._texts, self._currentPositions = getTextAndPos(self._numMagnets)
 
-        self._controlManager["textRedTorque"] = pw.TextBox((0.45, 0.0), (0.4, 0.1))
-        self._controlManager["textRedTorque"].setText("RED is torque vector.")
+        labels = [
+            "RED is torque vector.",
+            "WHITE is position vector.",
 
-        self._controlManager["textWhitePos"] = pw.TextBox((0.45, 0.1), (0.4, 0.1))
-        self._controlManager["textWhitePos"].setText("WHITE is position vector.")
+            "Motor simulation step: 1 us.",
+            "Simulation time: ",
+            "Motor Angle: ",
+            "Motor Speed: ",
+            "Motor Torque: ",
+            "Motor Torque Angle: "
 
-        self._controlManager["textRealtime"] = pw.TextBox((0.6, 0.2), (0.3, 0.1))
-        self._controlManager["textSimtime"] = pw.TextBox((0.6, 0.3), (0.3, 0.1))
-        self._controlManager["textDt"] = pw.TextBox((0.6, 0.4), (0.3, 0.1))
-        self._controlManager["motorAngle"] = pw.TextBox((0.6, 0.5), (0.3, 0.1))
-        self._controlManager["motorSpeed"] = pw.TextBox((0.6, 0.6), (0.3, 0.1))
-        self._controlManager["motorTorqueAngle"] = pw.TextBox((0.6, 0.7), (0.3, 0.1))
-        self._controlManager["motorTorque"] = pw.TextBox((0.6, 0.8), (0.3, 0.1))
+        ]
+        self._controlManager["textBoxes"] = pw.TextBoxes((0.45, 0.0), (0.55, 1.0), labels = labels)
+
+        alignments = [pw.TextBox.AlignmentHorizontal.LEFT] * 8
+        self._controlManager["textBoxes"].setAlignments(horizontal=alignments)
 
         self._controlManager.update()
 
@@ -65,13 +68,11 @@ class Visualizer:
         if not self._controlManager.isRunning():
             return False
 
-        self._controlManager["textRealtime"].setText(f"Real time: {perf_counter() - self._t0:.3f} s.")
-        self._controlManager["textSimtime"].setText(f"Simulation Time: {i.simtime:.3f} s.")
-        self._controlManager["textDt"].setText(f"Delta Time: {i.dt * 1000 * 1000} us.")
-        self._controlManager["motorAngle"].setText(f"Angle: {i.angleMotor:.3f} rad.")
-        self._controlManager["motorSpeed"].setText(f"Angular Velocity: {i.angularVelocity:.3f} rad/s.")
-        self._controlManager["motorTorqueAngle"].setText(f"Torque Angle: {i.angleTorque:.3f} rad.")
-        self._controlManager["motorTorque"].setText(f"Torque: {i.forceTorque:.3f} .")
+        self._controlManager["textBoxes"].setText(f"Simulation Time: {i.simtime:.3f} s.", 3)
+        self._controlManager["textBoxes"].setText(f"Angle: {i.angleMotor:.3f} rad.", 4)
+        self._controlManager["textBoxes"].setText(f"Angular Velocity: {i.angularVelocity:.3f} rad/s.", 5)
+        self._controlManager["textBoxes"].setText(f"Torque: {i.forceTorque:.3f} .", 6)
+        self._controlManager["textBoxes"].setText(f"Torque Angle: {i.angleTorque:.3f} rad.", 7)
 
         self._controlManager["freeDraw"].fill((0, 0, 0))
 

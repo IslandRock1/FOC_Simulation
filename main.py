@@ -9,7 +9,7 @@ from Controller import Controller
 
 def main():
 
-    numMagnets = 2
+    numMagnets = 6
     dt = 0.000001 # 1us
     motor = Motor(dt)
     visu = Visualizer(numMagnets)
@@ -25,17 +25,38 @@ def main():
 
     motor.setTorqueSequence([(0.0, 0.0)])
 
-    while visu.update(i):
+    nanosecond = -1
+    while True:
+        nanosecond += 1
 
-        for _ in range(10):
+        # Simulate motor every microsecond.
+        if (nanosecond % 1000 == 0):
             motor.update()
-            motor.setTorqueSequence(controller.getTorqueSequence(motor.getAngle()))
 
-        i.simtime = motor.getSimtime()
-        i.angleMotor = motor.getAngle()
-        i.angularVelocity = motor.getVelocity()
-        i.angleTorque = controller.getTorque()
-        i.forceTorque = motor.getTorque()
+            i.simtime = motor.getSimtime()
+            i.angleMotor = motor.getAngle()
+            i.angularVelocity = motor.getVelocity()
+            i.forceTorque = motor.getTorque()
+
+        # 100kHz => every 10'000 nanosecond. Every 10 microseconds.
+        if (nanosecond % 10_000 == 0):
+            angle = motor.getAngle()
+            torqueSequence = controller.getTorqueSequence(angle)
+            motor.setTorqueSequence(torqueSequence)
+
+            i.angleTorque = controller.getTorque()
+
+
+        # Just find a number that works.
+        # Originally tried 100Hz, (100 FPS).
+        # This worked, but seems very choppy
+        # as the motor moves very far in the 10ms
+        # between frames.
+        if (nanosecond % 10_000 == 0):
+            b = visu.update(i)
+            if (not b): break
+
+    print(f"Simulation finished. Total simulation time: {nanosecond / (1000 * 1000)} ms.")
 
 if __name__ == "__main__":
     main()

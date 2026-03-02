@@ -17,14 +17,14 @@ class Controller:
         return self._torque
 
     def getTorqueSequence(self, motorAngle):
-        target = motorAngle - math.pi / 2.0
+        target = motorAngle + math.pi / 2.0
         bestAngle = 0
         bestDiff = 10.0
 
         for angle in self._torqueAngle:
             d = (target - angle + math.pi) % math.tau - math.pi
-            if d < bestDiff:
-                bestDiff = d
+            if abs(d) < bestDiff:
+                bestDiff = abs(d)
                 bestAngle = angle
 
         self._torque = bestAngle
