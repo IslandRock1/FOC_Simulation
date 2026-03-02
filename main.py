@@ -2,6 +2,7 @@
 import math
 from time import perf_counter
 
+from PID import PID
 from Interface import Interface
 from Visualizer import Visualizer
 from Motor import Motor
@@ -15,19 +16,28 @@ def main():
     visu = Visualizer(numMagnets)
     controller = Controller(numMagnets)
 
+    positionSetpoint = 10.0
+    velocitySetpoint = 0.0
+
     i = Interface()
     i.simtime = 0.0
     i.dt = dt
+    i.angleSetpoint = positionSetpoint
     i.angleMotor = motor.getAngle()
     i.angularVelocity = motor.getVelocity()
-    i.angleTorque = 0.0 #controller.getTorque()
     i.forceTorque = motor.getTorque()
+    i.electricalPower = motor.getElectricalPower()
+    i.mechanicalPower = motor.getMechanicalPower()
 
-    motor.setVoltage((0.0, 0.0, 0.0))
+    positionPID = PID(500.0, 0.0, 0.0)
+    velocityPID = PID(500.0, 0.005, 100.0)
 
     nanosecond = -1
     while True:
         nanosecond += 1
+        if (nanosecond % 100_000_000 == 0):
+            velocitySetpoint *= -1.0
+
 
         # Simulate motor every microsecond.
         if (nanosecond % 1000 == 0):
@@ -38,12 +48,21 @@ def main():
             i.angularVelocity = motor.getVelocity()
             i.forceTorque = motor.getTorque()
 
+            i.electricalPower = motor.getElectricalPower()
+            i.mechanicalPower = motor.getMechanicalPower()
+
         # 100kHz => every 10'000 nanosecond. Every 10 microseconds.
         if (nanosecond % 10_000 == 0):
-            angle = motor.getElectricalAngle()
+            angle = motor.getAngle()
+            electricAngle = motor.getElectricalAngle()
             velocity = motor.getVelocity()
             current = motor.getCurrent()
-            voltages = controller.getVoltages(angle, velocity, current[0], current[1])
+
+            velocitySetpoint = positionPID.update(positionSetpoint - angle)
+            iqRef = velocityPID.update(velocity - velocitySetpoint)
+            i.angularVelocitySetpoint = velocitySetpoint
+
+            voltages = controller.getVoltages(iqRef, electricAngle, velocity, current[0], current[1])
             motor.setVoltage(voltages)
 
 
@@ -52,13 +71,13 @@ def main():
         # This worked, but seems very choppy
         # as the motor moves very far in the 10ms
         # between frames.
-        if (nanosecond % 40_000 == 0):
+        if (nanosecond % 500_000 == 0):
             b = visu.update(i)
             if (not b): break
 
             elPower = motor.getElectricalPower()
             mechPower = motor.getMechanicalPower()
-            print(f"Electrical Power: {elPower:.2f}W | Mechanical Power: {mechPower:.2f}W")
+            # print(f"Electrical Power: {elPower:.2f}W | Mechanical Power: {mechPower:.2f}W")
 
     print(f"Simulation finished. Total simulation time: {nanosecond / (1000.0 * 1000.0)} ms.")
 

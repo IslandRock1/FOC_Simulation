@@ -5,13 +5,7 @@ class PI_Reg:
         self._Ki = Ki
 
         self._sum = 0
-        self._setpoint = 0
 
-    def setSetpoint(self, setpoint):
-        self._setpoint = setpoint
-
-    def update(self, value):
-        error = value - self._setpoint
+    def update(self, error):
         self._sum += error
-
         return self._Kp * error + self._Ki * self._sum
