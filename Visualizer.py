@@ -48,18 +48,16 @@ class Visualizer:
             "Motor Torque Angle:"
 
         ]
-        self._controlManager["textBoxesTop"] = pw.TextBoxes((0.45, 0.0), (0.55, 0.2),
-                labels=["RED is torque vector.", "WHITE is position vector."])
 
         alignments = [pw.TextBox.AlignmentHorizontal.LEFT] * 6
-        self._controlManager["textBoxesLeft"] = pw.TextBoxes((0.45, 0.2), (0.3, 0.3), labels = labels)
+        self._controlManager["textBoxesLeft"] = pw.TextBoxes((0.45, 0.0), (0.3, 0.3), labels = labels)
         self._controlManager["textBoxesLeft"].setAlignments(horizontal=alignments)
 
-        self._controlManager["textBoxesRight"] = pw.TextBoxes((0.75, 0.2), (0.25, 0.3), labels = [""] * 6)
+        self._controlManager["textBoxesRight"] = pw.TextBoxes((0.75, 0.0), (0.25, 0.3), labels = [""] * 6)
         self._controlManager["textBoxesRight"].setAlignments(horizontal=alignments)
         self._controlManager["textBoxesRight"].setText("1 us", 0)
 
-        plot = pw.Plot((0.45, 0.5), (0.55, 0.5))
+        plot = pw.Plot((0.45, 0.3), (0.55, 0.3))
         plot.setTitle("Motor Velocity")
         plot.setXLabel("Time (ms)")
         plot.setYLabel("Velocity (Rad/s)")

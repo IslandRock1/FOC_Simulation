@@ -98,3 +98,6 @@ class Motor:
 
     def getAngle(self):
         return self._theta
+
+    def getElectricalAngle(self):
+        return self._thetaElectrical

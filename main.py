@@ -20,7 +20,7 @@ def main():
     i.dt = dt
     i.angleMotor = motor.getAngle()
     i.angularVelocity = motor.getVelocity()
-    i.angleTorque = controller.getTorque()
+    i.angleTorque = 0.0 #controller.getTorque()
     i.forceTorque = motor.getTorque()
 
     motor.setVoltage((0.0, 0.0, 0.0))
@@ -40,8 +40,11 @@ def main():
 
         # 100kHz => every 10'000 nanosecond. Every 10 microseconds.
         if (nanosecond % 10_000 == 0):
-            angle = motor.getAngle()
-            motor.setVoltage((-1.0, 2.0, -1.0))
+            angle = motor.getElectricalAngle()
+            velocity = motor.getVelocity()
+            current = motor.getCurrent()
+            voltages = controller.getVoltages(angle, velocity, current[0], current[1])
+            motor.setVoltage(voltages)
 
 
         # Just find a number that works.
