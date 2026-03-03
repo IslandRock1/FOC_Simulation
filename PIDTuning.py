@@ -52,7 +52,7 @@ def testParams(params: PIDParams, results: Results):
     velocityPID = PID(params.velocityKp, params.velocityKi, params.velocityKd, maxOut=params.maxVelocity)
 
     outPositions = []
-    for posSetpoint in results.setpoints:
+    for ix, posSetpoint in enumerate(results.setpoints):
         angle = motor.getAngle()
         electricAngle = motor.getElectricalAngle()
         velocity = motor.getVelocity()
@@ -64,6 +64,11 @@ def testParams(params: PIDParams, results: Results):
         voltages = controller.getVoltages(iqRef, electricAngle, velocity, current[0], current[1])
         motor.setVoltage(voltages)
 
+        if (results.settlingTime is None) and ((posSetpoint * 0.98) < angle < (posSetpoint * 1.02)):
+            results.settlingTime = 0.01 * ix
+        elif not ((posSetpoint * 0.9) < angle < (posSetpoint * 1.1)):
+            results.settlingTime = None
+
         outPositions.append(angle)
         for _ in range(10): motor.update()
 
@@ -71,6 +76,8 @@ def testParams(params: PIDParams, results: Results):
     errors = [(set - ang) ** 2 for (set, ang) in zip(results.setpoints, results.positions)]
     results.RMS = math.sqrt(sum(errors) / len(errors))
 
+    results.overshoot = max(results.positions) / max(results.setpoints)
+    if (results.settlingTime is None): results.settlingTime = 1_000_000
     return results
 
 def getTestCases(numTimestamps):
@@ -111,7 +118,7 @@ def main():
     plot.setValue(timestamps, stepResponse.positions, 0)
     plot.setValue(timestamps, stepResponse.setpoints, 1)
 
-    text = pw.TextBoxes((0.0, 0.0), (1.0, 0.2), labels=[f"{stepResponse.name}", f"RMS: {stepResponse.RMS}"])
+    text = pw.TextBoxes((0.0, 0.0), (1.0, 0.2), labels=[f"{stepResponse.name}", f"RMS: {stepResponse.RMS:.3f} | Settling time: {stepResponse.settlingTime:.1f} ms"])
 
     group = pw.UIGroup((0.0, 0.0), (0.5, 1.0))
     group["text"] = text
@@ -143,7 +150,7 @@ def main():
 
             visu["plotGroup"]["plot"].setValue(timestamps, stepResponse.positions, 0)
             visu["plotGroup"]["plot"].setValue(timestamps, stepResponse.setpoints, 1)
-            visu["plotGroup"]["text"].setText(f"RMS: {stepResponse.RMS}", 1)
+            visu["plotGroup"]["text"].setText(f"RMS: {stepResponse.RMS:.3f} | Settling time: {stepResponse.settlingTime:.1f} ms", 1)
 
 
     visu.close()
