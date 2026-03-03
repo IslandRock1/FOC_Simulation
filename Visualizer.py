@@ -4,7 +4,7 @@ from time import perf_counter
 import pygame as pg
 import pg_widgets as pw
 
-from Interface import Interface
+from utils.Interface import Interface
 
 def getTextAndPos(numMagnets):
     textDist = 0.4
@@ -45,25 +45,28 @@ class Visualizer:
             "Motor Angle:",
             "Motor Speed:",
             "Motor Torque:",
-            "Motor Torque Angle:"
-
+            "Total Power: "
         ]
-        self._controlManager["textBoxesTop"] = pw.TextBoxes((0.45, 0.0), (0.55, 0.2),
-                labels=["RED is torque vector.", "WHITE is position vector."])
 
-        alignments = [pw.TextBox.AlignmentHorizontal.LEFT] * 6
-        self._controlManager["textBoxesLeft"] = pw.TextBoxes((0.45, 0.2), (0.3, 0.3), labels = labels)
+        alignments = [pw.TextBox.AlignmentHorizontal.LEFT] * len(labels)
+        self._controlManager["textBoxesLeft"] = pw.TextBoxes((0.45, 0.0), (0.3, 0.3), labels = labels)
         self._controlManager["textBoxesLeft"].setAlignments(horizontal=alignments)
 
-        self._controlManager["textBoxesRight"] = pw.TextBoxes((0.75, 0.2), (0.25, 0.3), labels = [""] * 6)
+        self._controlManager["textBoxesRight"] = pw.TextBoxes((0.75, 0.0), (0.25, 0.3), labels = [""] * len(labels))
         self._controlManager["textBoxesRight"].setAlignments(horizontal=alignments)
         self._controlManager["textBoxesRight"].setText("1 us", 0)
 
-        plot = pw.Plot((0.45, 0.5), (0.55, 0.5))
+        plot = pw.Plot((0.45, 0.3), (0.55, 0.3))
+        plot.setTitle("Motor Position")
+        plot.setXLabel("Time (ms)")
+        plot.setYLabel("Position (Rad)")
+        self._controlManager["plotPosition"] = plot
+
+        plot = pw.Plot((0.45, 0.6), (0.55, 0.3))
         plot.setTitle("Motor Velocity")
         plot.setXLabel("Time (ms)")
         plot.setYLabel("Velocity (Rad/s)")
-        self._controlManager["plotPosition"] = plot
+        self._controlManager["plotVelocity"] = plot
 
         self._controlManager.update()
 
@@ -72,23 +75,23 @@ class Visualizer:
         motorVec = arrowDelta.rotate_rad(i.angleMotor)
         self._controlManager["freeDraw"].arrow(self._middleVec, self._middleVec + motorVec, 3, (255, 255, 255))
 
-        arrowDelta *= 0.7
-        torqueVec = arrowDelta.rotate_rad(i.angleTorque)
-        self._controlManager["freeDraw"].arrow(self._middleVec, self._middleVec + torqueVec, 3, (255, 0, 0))
-
-
     def update(self, i: Interface):
         if not self._controlManager.isRunning():
             return False
 
-        # self._controlManager["plotPosition"].addValue(round(i.simtime * 1000, 3), i.angleMotor, 0)
-        self._controlManager["plotPosition"].addValue(round(i.simtime * 1000, 3), i.angularVelocity, 1)
+        maxLength = 2500
+        plotT = round(i.simtime * 1000.0, 3)
+        self._controlManager["plotPosition"].addValue(plotT, i.angleMotor, 0, maxLength)
+        self._controlManager["plotPosition"].addValue(plotT, i.angleSetpoint, 1, maxLength)
+
+        self._controlManager["plotVelocity"].addValue(plotT, i.angularVelocity, 0, maxLength)
+        self._controlManager["plotVelocity"].addValue(plotT, i.angularVelocitySetpoint, 1, maxLength)
 
         self._controlManager["textBoxesRight"].setText(f"{i.simtime:.3f} s", 1)
         self._controlManager["textBoxesRight"].setText(f"{i.angleMotor:.3f} rad", 2)
         self._controlManager["textBoxesRight"].setText(f"{i.angularVelocity:.3f} rad/s", 3)
         self._controlManager["textBoxesRight"].setText(f"{i.forceTorque:.3f} ", 4)
-        self._controlManager["textBoxesRight"].setText(f"{i.angleTorque:.3f} rad", 5)
+        self._controlManager["textBoxesRight"].setText(f"{i.totalElectricPower:.3f} Wh", 5)
 
         self._controlManager["freeDraw"].fill((0, 0, 0))
 
