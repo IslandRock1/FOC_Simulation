@@ -1,10 +1,10 @@
 
 import math
-from PI_Reg import PI_Reg
+from utils.PI_Reg import PI_Reg
 from Motor import Motor
 
 class Controller:
-    def __init__(self, polePairs):
+    def __init__(self, polePairs, *, dRegKp = 1.0, dRegKi = 0.0, qRegKp = 1.0, qRegKi = 0.0, maxD = None, maxQ = None):
         self._polePairs = polePairs
         self._maxVoltage = 36.0
 
@@ -18,8 +18,8 @@ class Controller:
         self._clarkeVa = 0.0
         self._clarkeVb = 0.0
 
-        self._piregD = PI_Reg(10.0, 0.0)
-        self._piregQ = PI_Reg(10.0, 0.0)
+        self._piregD = PI_Reg(dRegKp, dRegKi, maxOut=maxD)
+        self._piregQ = PI_Reg(qRegKp, qRegKi, maxOut=maxQ)
 
         self._V = [0.0, 0.0, 0.0]
 

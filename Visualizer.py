@@ -4,7 +4,7 @@ from time import perf_counter
 import pygame as pg
 import pg_widgets as pw
 
-from Interface import Interface
+from utils.Interface import Interface
 
 def getTextAndPos(numMagnets):
     textDist = 0.4
@@ -44,14 +44,15 @@ class Visualizer:
             "Simulation time:",
             "Motor Angle:",
             "Motor Speed:",
-            "Motor Torque:"
+            "Motor Torque:",
+            "Total Power: "
         ]
 
-        alignments = [pw.TextBox.AlignmentHorizontal.LEFT] * 5
+        alignments = [pw.TextBox.AlignmentHorizontal.LEFT] * len(labels)
         self._controlManager["textBoxesLeft"] = pw.TextBoxes((0.45, 0.0), (0.3, 0.3), labels = labels)
         self._controlManager["textBoxesLeft"].setAlignments(horizontal=alignments)
 
-        self._controlManager["textBoxesRight"] = pw.TextBoxes((0.75, 0.0), (0.25, 0.3), labels = [""] * 5)
+        self._controlManager["textBoxesRight"] = pw.TextBoxes((0.75, 0.0), (0.25, 0.3), labels = [""] * len(labels))
         self._controlManager["textBoxesRight"].setAlignments(horizontal=alignments)
         self._controlManager["textBoxesRight"].setText("1 us", 0)
 
@@ -90,6 +91,7 @@ class Visualizer:
         self._controlManager["textBoxesRight"].setText(f"{i.angleMotor:.3f} rad", 2)
         self._controlManager["textBoxesRight"].setText(f"{i.angularVelocity:.3f} rad/s", 3)
         self._controlManager["textBoxesRight"].setText(f"{i.forceTorque:.3f} ", 4)
+        self._controlManager["textBoxesRight"].setText(f"{i.totalElectricPower:.3f} Wh", 5)
 
         self._controlManager["freeDraw"].fill((0, 0, 0))
 

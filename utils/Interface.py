@@ -11,5 +11,6 @@ class Interface:
         self.torqueSetpoint = None
         self.forceTorque = None
 
+        self.totalElectricPower = None
         self.electricalPower = None
         self.mechanicalPower = None

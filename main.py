@@ -1,9 +1,5 @@
-
-import math
-from time import perf_counter
-
-from PID import PID
-from Interface import Interface
+from utils.PID import PID
+from utils.Interface import Interface
 from Visualizer import Visualizer
 from Motor import Motor
 from Controller import Controller
@@ -16,28 +12,34 @@ def main():
     visu = Visualizer(numMagnets)
     controller = Controller(numMagnets)
 
-    positionSetpoint = 10.0
+    positionSetpoint = 3.1415926 * 2.0
     velocitySetpoint = 0.0
 
     i = Interface()
     i.simtime = 0.0
     i.dt = dt
-    i.angleSetpoint = positionSetpoint
     i.angleMotor = motor.getAngle()
+    i.angleSetpoint = positionSetpoint
     i.angularVelocity = motor.getVelocity()
+    i.angularVelocitySetpoint = velocitySetpoint
     i.forceTorque = motor.getTorque()
+    i.torqueSetpoint = 0
+    i.totalElectricPower = motor.getTotalElectricPower()
     i.electricalPower = motor.getElectricalPower()
     i.mechanicalPower = motor.getMechanicalPower()
 
-    positionPID = PID(500.0, 0.0, 0.0)
-    velocityPID = PID(500.0, 0.005, 100.0)
+    positionPID = PID(100.0, 0.0, 0.0)
+    positionPID.setMax(200.0) # Observed max speed of about 145
+    velocityPID = PID(100.0, 0.01, 0.0)
+    velocityPID.setMax(1000.0) # Mostly just a guess.
+
+    for _ in range(500):
+        visu.update(i)
+    print("Simulation started.")
 
     nanosecond = -1
     while True:
         nanosecond += 1
-        if (nanosecond % 100_000_000 == 0):
-            velocitySetpoint *= -1.0
-
 
         # Simulate motor every microsecond.
         if (nanosecond % 1000 == 0):
@@ -48,6 +50,7 @@ def main():
             i.angularVelocity = motor.getVelocity()
             i.forceTorque = motor.getTorque()
 
+            i.totalElectricPower = motor.getTotalElectricPower()
             i.electricalPower = motor.getElectricalPower()
             i.mechanicalPower = motor.getMechanicalPower()
 
@@ -71,7 +74,7 @@ def main():
         # This worked, but seems very choppy
         # as the motor moves very far in the 10ms
         # between frames.
-        if (nanosecond % 500_000 == 0):
+        if (nanosecond % 100_000 == 0):
             b = visu.update(i)
             if (not b): break
 

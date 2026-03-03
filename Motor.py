@@ -1,6 +1,5 @@
 
 import math
-from Interface import Interface
 
 class Motor:
     R = 0.2
@@ -9,7 +8,7 @@ class Motor:
     Kt = 0.1
     J = 0.0005
     B = 0.001
-    flux = 0.00067
+    flux = 0.00067 # Needs further research.
 
     def __init__(self, polePairs, dt):
         self._simtime = 0.0
@@ -27,6 +26,7 @@ class Motor:
         self._thetaElectrical = 0.0    # Electrical angle (polePairs * angle)
 
         self._wOut = 0.0
+        self._totalElectricalPower = 0.0
 
     def _getBackEMF(self):
         e_a = self.Ke * self._W * math.sin(self._thetaElectrical)
@@ -46,7 +46,6 @@ class Motor:
         if (abs(self._Ia + self._Ib + self._Ic) > 1e-5):
             print(f"Invalid current?")
             print(f"Currents: {self._Ia}, {self._Ib}, {self._Ic} | Sum: {self._Ia + self._Ib + self._Ic}")
-
 
     def _updateTorque(self):
         self._T = self.Kt * (
@@ -73,6 +72,7 @@ class Motor:
         self._updateTorque()
         self._updateMotor()
 
+        self._totalElectricalPower += self.getElectricalPower() * self._dt / 3600.0
         self._simtime += self._dt
 
     def getSimtime(self):
@@ -86,6 +86,9 @@ class Motor:
 
     def getVoltage(self):
         return self._V
+
+    def getTotalElectricPower(self):
+        return self._totalElectricalPower
 
     def getElectricalPower(self):
         va, vb, vc = self._V
