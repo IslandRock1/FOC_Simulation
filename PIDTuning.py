@@ -12,12 +12,12 @@ class PIDParams:
     positionKp: float
     positionKi: float
     positionKd: float
-    maxPosition: float
+    maxVelocityTarget: float
 
     velocityKp: float
     velocityKi: float
     velocityKd: float
-    maxVelocity: float
+    maxTorqueTarget: float
 
     dRegKp: float
     dRegKi: float
@@ -28,12 +28,14 @@ class PIDParams:
 
 @dataclass
 class Results:
-    name:            str         = None
-    setpoints:       list[float] = None
-    positions:       list[float] = None
-    RMS:             float       = None
-    overshoot:       float       = None
-    settlingTime:    float       = None
+    name:                 str         = None
+    setpoints:            list[float] = None
+    positions:            list[float] = None
+    velocitySetpoints:    list[float] = None
+    velocity:             list[float] = None
+    RMS:                  float       = None
+    overshoot:            float       = None
+    settlingTime:         float       = None
 
 @dataclass
 class GlobalParams:
@@ -48,10 +50,12 @@ def testParams(params: PIDParams, results: Results):
         maxD=params.maxD, maxQ=params.maxQ
         )
 
-    positionPID = PID(params.positionKp, params.positionKi, params.positionKd, maxOut=params.maxPosition)
-    velocityPID = PID(params.velocityKp, params.velocityKi, params.velocityKd, maxOut=params.maxVelocity)
+    positionPID = PID(params.positionKp, params.positionKi, params.positionKd, maxOut=params.maxVelocityTarget)
+    velocityPID = PID(params.velocityKp, params.velocityKi, params.velocityKd, maxOut=params.maxTorqueTarget)
 
     outPositions = []
+    velocitySetpoints = []
+    velocities = []
     for ix, posSetpoint in enumerate(results.setpoints):
         angle = motor.getAngle()
         electricAngle = motor.getElectricalAngle()
@@ -70,9 +74,13 @@ def testParams(params: PIDParams, results: Results):
             results.settlingTime = None
 
         outPositions.append(angle)
+        velocitySetpoints.append(velocitySetpoint)
+        velocities.append(velocity)
         for _ in range(10): motor.update()
 
     results.positions = outPositions
+    results.velocity = velocities
+    results.velocitySetpoints = velocitySetpoints
     errors = [(set - ang) ** 2 for (set, ang) in zip(results.setpoints, results.positions)]
     results.RMS = math.sqrt(sum(errors) / len(errors))
 
@@ -93,11 +101,11 @@ def main():
         positionKp=1.0,
         positionKi=0.0,
         positionKd=0.0,
-        maxPosition=None,
+        maxVelocityTarget=200.0,
         velocityKp=1000.0,
         velocityKi=0.0,
         velocityKd=0.0,
-        maxVelocity=None,
+        maxTorqueTarget=None,
         dRegKp=1000.0,
         dRegKi=0.0,
         maxD=None,
@@ -111,8 +119,9 @@ def main():
     stepResponse = testParams(params, stepResponse)
 
     visu = pw.ControlManager()
-    plot = pw.Plot((0.0, 0.2), (1.0, 0.8))
+    plot = pw.Plot((0.0, 0.2), (1.0, 0.4))
 
+    plot.setTitle("Motor Position")
     plot.setXLabel("Time (ms)")
     plot.setYLabel("Position (Rad)")
     plot.setValue(timestamps, stepResponse.positions, 0)
@@ -122,15 +131,25 @@ def main():
 
     group = pw.UIGroup((0.0, 0.0), (0.5, 1.0))
     group["text"] = text
-    group["plot"] = plot
+    group["plotPosition"] = plot
+
+    plot = pw.Plot((0.0, 0.6), (1.0, 0.4))
+    plot.setTitle("Motor Velocity")
+    plot.setXLabel("Time (ms)")
+    plot.setYLabel("Velocity (Rad/s)")
+    plot.setValue(timestamps, stepResponse.velocity, 0)
+    plot.setValue(timestamps, stepResponse.velocitySetpoints, 1)
+
+    group["plotVelocity"] = plot
+
     visu["plotGroup"] = group
 
     labels = ["Pos Kp", "Pos Ki", "Pos Kd", "Vel Kp", "Vel Ki", "Vel Kd"]
     lower = [0.0] * len(labels)
-    upper = [1000.0, 10000.0, 100000.0, 2.0, 1000.0, 1000.0]
+    upper = [1000.0, 10.0, 100000.0, 2.0, 1000.0, 1000.0]
     current = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
     tuningSliders = pw.TuningSliders((0.5, 0.0), (0.5, 1.0),
-        labels=labels, lower_bounds=lower, upper_bounds=upper, current_values=current)
+        labels=labels, lower_bounds=upper, upper_bounds=lower, current_values=current)
     visu["tuningSliders"] = tuningSliders
 
     while visu.isRunning():
@@ -148,8 +167,10 @@ def main():
             stepResponse = testParams(params, stepResponse)
             computedVals = newVals
 
-            visu["plotGroup"]["plot"].setValue(timestamps, stepResponse.positions, 0)
-            visu["plotGroup"]["plot"].setValue(timestamps, stepResponse.setpoints, 1)
+            visu["plotGroup"]["plotPosition"].setValue(timestamps, stepResponse.positions, 0)
+            visu["plotGroup"]["plotPosition"].setValue(timestamps, stepResponse.setpoints, 1)
+            visu["plotGroup"]["plotVelocity"].setValue(timestamps, stepResponse.velocity, 0)
+            visu["plotGroup"]["plotVelocity"].setValue(timestamps, stepResponse.velocitySetpoints, 1)
             visu["plotGroup"]["text"].setText(f"RMS: {stepResponse.RMS:.3f} | Settling time: {stepResponse.settlingTime:.1f} ms", 1)
 
 
