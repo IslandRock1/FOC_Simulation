@@ -62,11 +62,16 @@ def testParams(params: PIDParams, results: Results):
         velocity = motor.getVelocity()
         current = motor.getCurrent()
 
-        velocitySetpoint = positionPID.update(posSetpoint - angle)
-        iqRef = velocityPID.update(velocity - velocitySetpoint)
+        # 100Hz
+        if (ix % 1000 == 0): velocitySetpoint = positionPID.update(posSetpoint - angle)
 
-        voltages = controller.getVoltages(iqRef, electricAngle, velocity, current[0], current[1])
-        motor.setVoltage(voltages)
+        # 2kHz
+        if (ix % 50 == 0): iqRef = velocityPID.update(velocity - velocitySetpoint)
+
+        # 20kHz
+        if (ix % 5 == 0):
+            voltages = controller.getVoltages(iqRef, electricAngle, velocity, current[0], current[1])
+            motor.setVoltage(voltages)
 
         if (results.settlingTime is None) and ((posSetpoint * 0.98) < angle < (posSetpoint * 1.02)):
             results.settlingTime = 0.01 * ix
@@ -96,13 +101,13 @@ def getTestCases(numTimestamps):
     return stepResponse
 
 def main():
-    computedVals = [1.0, 0.0, 0.0]
+    computedVals = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
     params = PIDParams(
         positionKp=1.0,
         positionKi=0.0,
         positionKd=0.0,
         maxVelocityTarget=200.0,
-        velocityKp=1000.0,
+        velocityKp=1.0,
         velocityKi=0.0,
         velocityKd=0.0,
         maxTorqueTarget=None,
@@ -146,7 +151,7 @@ def main():
 
     labels = ["Pos Kp", "Pos Ki", "Pos Kd", "Vel Kp", "Vel Ki", "Vel Kd"]
     lower = [0.0] * len(labels)
-    upper = [1000.0, 10.0, 100000.0, 2.0, 1000.0, 1000.0]
+    upper = [100.0, 10.0, 100000.0, 2.0, 1000.0, 1000.0]
     current = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
     tuningSliders = pw.TuningSliders((0.5, 0.0), (0.5, 1.0),
         labels=labels, lower_bounds=upper, upper_bounds=lower, current_values=current)
