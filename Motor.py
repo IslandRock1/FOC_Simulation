@@ -44,8 +44,7 @@ class Motor:
         self._Ic += self._dt * (Vc - self.R * self._Ic - e_c) / self.L
 
         if (abs(self._Ia + self._Ib + self._Ic) > 1e-5):
-            print(f"Invalid current?")
-            print(f"Currents: {self._Ia}, {self._Ib}, {self._Ic} | Sum: {self._Ia + self._Ib + self._Ic}")
+            raise ValueError(f"Invalid current? Currents: {self._Ia}, {self._Ib}, {self._Ic} | Sum: {self._Ia + self._Ib + self._Ic}")
 
     def _updateTorque(self):
         self._T = self.Kt * (
@@ -63,7 +62,7 @@ class Motor:
     def setVoltage(self, V):
         Va, Vb, Vc = V
         if abs(Va + Vb + Vc) > 1e-5:
-            raise ValueError("Voltage sum must be 0.")
+            raise ValueError(f"Voltage sum must be 0. Computed sum: {Va + Vb + Vc}")
 
         self._V = V
 
