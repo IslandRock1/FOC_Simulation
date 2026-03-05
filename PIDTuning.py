@@ -151,7 +151,7 @@ def main():
 
     labels = ["Pos Kp", "Pos Ki", "Pos Kd", "Vel Kp", "Vel Ki", "Vel Kd"]
     lower = [0.0] * len(labels)
-    upper = [100.0, 10.0, 100000.0, 2.0, 1000.0, 1000.0]
+    upper = [100.0, 100.0, 100.0, 100.0, 100.0, 100.0]
     current = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
     tuningSliders = pw.TuningSliders((0.5, 0.0), (0.5, 1.0),
         labels=labels, lower_bounds=upper, upper_bounds=lower, current_values=current)
